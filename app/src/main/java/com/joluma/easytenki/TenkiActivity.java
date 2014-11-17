@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -31,6 +32,8 @@ public class TenkiActivity extends Activity {
 
     Typeface weatherFont;
     TextClock timeField;
+    RelativeLayout mLayout;
+    Button mChangeCityBtn;
 
     TextView cityField;
     TextView updatedField;
@@ -38,7 +41,6 @@ public class TenkiActivity extends Activity {
     TextView currentTemperatureField;
     TextView weatherIcon;
 
-    RelativeLayout mLayout;
     Handler handler = new Handler();
 
     @Override
@@ -46,15 +48,24 @@ public class TenkiActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather);
 
-        mLayout = (RelativeLayout)findViewById(R.id.relativeLayout);
         weatherFont = Typeface.createFromAsset(getAssets(), "fonts/tenki.ttf");
-        cityField = (TextView)findViewById(R.id.city_field);
         timeField = (TextClock)findViewById(R.id.current_datetime_field);
+        mLayout = (RelativeLayout)findViewById(R.id.relativeLayout);
+        mChangeCityBtn = (Button)findViewById(R.id.action_change_city);
+
+        cityField = (TextView)findViewById(R.id.city_field);
         updatedField = (TextView)findViewById(R.id.updated_field);
         detailsField = (TextView)findViewById(R.id.details_field);
         currentTemperatureField = (TextView)findViewById(R.id.current_temperature_field);
         weatherIcon = (TextView)findViewById(R.id.weather_icon);
         weatherIcon.setTypeface(weatherFont);
+
+        mChangeCityBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showInputDialog();
+            }
+        });
     }
 
     @Override
@@ -86,6 +97,8 @@ public class TenkiActivity extends Activity {
 
     private void renderWeather(JSONObject json){
         try {
+            setTime(json.getJSONObject("coord").getString("lat"), json.getJSONObject("coord").getString("lon"));
+
             cityField.setText(json.getString("name").toUpperCase(Locale.US) +
                     ", " +
                     json.getJSONObject("sys").getString("country"));
@@ -107,8 +120,6 @@ public class TenkiActivity extends Activity {
             setWeatherIcon(details.getInt("id"),
                     json.getJSONObject("sys").getLong("sunrise") * 1000,
                     json.getJSONObject("sys").getLong("sunset") * 1000);
-
-            setTime(json.getJSONObject("coord").getString("lat"), json.getJSONObject("coord").getString("lon"));
         }catch(Exception e){
             Log.e("SimpleWeather", "One or more fields not found in the JSON data");
         }
@@ -186,7 +197,7 @@ public class TenkiActivity extends Activity {
     }
 
     private void changeBackground() {
-        int mHeure = Integer.parseInt(timeField.getText().subSequence(0,2).toString());
+        int mHeure = Integer.parseInt(timeField.getText().toString().split(":")[0]);
         Drawable mBackgroundImage = null;
 
         if (mHeure >= 5 && mHeure < 11){
@@ -207,31 +218,5 @@ public class TenkiActivity extends Activity {
     public void changeCity(String city){
         new TenkiCity(this).setCity(city);
         updateWeatherData(city);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_weather, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        if(item.getItemId() == R.id.action_change_city){
-            showInputDialog();
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 }
